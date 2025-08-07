@@ -4,7 +4,7 @@ const Redis = require("ioredis");
 const path = require("path");
 
 const app = express();
-const redis = new Redis({ host: process.env.REDIS_HOST || "localhost" });
+const redis = new Redis({ host: process.env.REDIS_HOST || "localhost" , port: process.env.REDIS_PORT || 6379 });
 
 app.set("view engine", "ejs");
 app.set("views", path.join(__dirname, "views"));
