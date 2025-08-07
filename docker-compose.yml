@@ -1,0 +1,26 @@
+version: "3.9"
+
+services:
+  app:
+    build: ./app
+    ports:
+      - "5050:5000"
+    depends_on:
+      - redis
+    environment:
+      - REDIS_HOST=redis
+    networks:
+      - app_net
+
+  redis:
+    image: redis:7-alpine
+    volumes:
+      - redis_data:/data
+    networks:
+      - app_net
+
+networks:
+  app_net:
+
+volumes:
+  redis_data:

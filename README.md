@@ -1,175 +1,129 @@
-# 🔄 DevOps Portfolio: Multi-Container Setup with Redis & Docker Compose
+# 📝 DevOps Guestbook App (Day 2 - 7-Day DevOps Challenge)
 
-> “Infrastructure isn’t real until it runs in containers — and talks to other containers.”
-
-This project demonstrates a real-world multi-container DevOps environment using **Docker Compose** to orchestrate a **Node.js portfolio app** and a **Redis service**. It reflects microservice-style architecture and showcases container communication, shared networks, service orchestration, and stateful caching.
+This project is a production-ready, containerized **Guestbook Web Application** powered by Node.js, Express, and Redis. It demonstrates multi-container architecture, Docker Compose orchestration, environment variable injection, and external image deployment via Docker Hub.
 
 ---
 
-## 🧱 Architecture
+## 🧰 Tech Stack
 
-```
-                      +----------------------+
-                      |   Node.js App        |
-                      |  (Express + Redis)   |
-                      +----------+-----------+
-                                 |
-                     Redis Client Connection
-                                 |
-                      +----------v-----------+
-                      |     Redis Server     |
-                      +----------------------+
-                                 |
-                        [Docker Network: app_net]
-```
+- **Node.js + Express** – Web server and API layer
+- **Redis (7-alpine)** – In-memory store for guestbook messages
+- **Docker** – Containerization of services
+- **Docker Compose** – Multi-container orchestration
+- **EJS + CSS** – Clean dark UI with responsive form layout
 
 ---
 
-## 📦 Stack Overview
+## 🧪 Features
 
-| Component        | Description                                  |
-|------------------|----------------------------------------------|
-| Node.js App      | Serves the portfolio frontend on `/` and tracks visitor count using Redis |
-| Redis            | Key-value store acting as simulated backend service (visit counter) |
-| Docker Compose   | Orchestrates both services with isolated networking and volumes |
-
----
-
-## 🧰 Features
-
-- Containerized **Node.js + Express** app with Redis integration
-- Tracks unique page visits using Redis
-- Exposes port `5050` on localhost
-- Self-contained and reproducible using Docker Compose
-- Separate volumes for persistent Redis storage
-- Services communicate over internal Docker network
+- Users can submit their name + message to the guestbook
+- All entries are stored in Redis and retrieved dynamically
+- Beautiful dark-mode UI with custom fonts and hierarchy
+- Fully containerized (Dockerfile + Compose)
+- CI/CD ready and deployable via Railway or Docker Hub
 
 ---
 
-## 🚀 How to Run
+## 🐳 Multi-Container Architecture
 
-### 1. Clone This Project
+Here’s the high-level container structure:
 
-```bash
-git clone https://github.com/ddadekunle/devops-day2-multicontainer.git
-cd devops-day2-multicontainer
 ```
-
-### 2. Start All Services
-
-```bash
-docker compose up --build
-```
-
-Visit: [http://localhost:5050](http://localhost:5050)
-
-You’ll see your portfolio site and a visit counter updated via Redis.
-
-### 3. Stop & Clean Up
-
-```bash
-docker compose down
-```
-
-To remove volumes as well:
-
-```bash
-docker compose down -v
++------------------+            +----------------+
+|   guestbook-app  |  <------>  |     redis      |
+| (Node.js + EJS)  |  DockerNet |  In-memory DB  |
++------------------+            +----------------+
+         ↑                              ↑
+         |                              |
+  localhost:5050                  Volume: redis_data
 ```
 
 ---
 
-## 🐋 docker-compose.yml
+## 🏗 docker-compose.yml Breakdown
 
 ```yaml
-version: "3.9"
+version: "3.9"  # Docker Compose schema version
 
 services:
   app:
-    build: ./app
+    build: ./app                # Builds app from ./app/Dockerfile
     ports:
-      - "5050:5000"
+      - "5050:5000"             # Host:Container port mapping
     depends_on:
-      - redis
+      - redis                   # Starts Redis before app
     environment:
-      - REDIS_HOST=redis
+      - REDIS_HOST=redis        # ENV for Redis hostname inside container
     networks:
-      - app_net
+      - app_net                 # Shared Docker network
 
   redis:
-    image: redis:7-alpine
+    image: redis:7-alpine       # Lightweight official Redis image
     volumes:
-      - redis_data:/data
+      - redis_data:/data        # Persist Redis data locally
     networks:
       - app_net
 
 networks:
-  app_net:
+  app_net:                      # Enables service discovery
 
 volumes:
-  redis_data:
+  redis_data:                   # Named volume for Redis persistence
 ```
 
 ---
 
-## 🧠 Redis Usage Example
+## 🚀 Deployment Options
 
-In `app/server.js`, the Node app connects to Redis:
-
-```javascript
-const Redis = require('ioredis');
-const redis = new Redis({ host: process.env.REDIS_HOST });
-
-app.get("/", async (req, res) => {
-  const visits = await redis.incr("visits");
-  res.send(`Welcome! This page has been visited ${visits} times.`);
-});
-```
-
----
-
-## 📁 Project Structure
+### ✅ Option 1: Run Locally with Docker Compose
 
 ```bash
-day-2-multicontainer/
-├── docker-compose.yml
-├── app/
-│   ├── Dockerfile
-│   ├── server.js
-│   ├── package.json
-│   └── ...
+# Clone & navigate into project
+git clone https://github.com/ddadekunle/devops-day2-guestbook.git
+cd devops-day2-guestbook
+
+# Build and start
+docker-compose up --build
+
+# Open in browser
+http://localhost:5050
 ```
 
 ---
 
-## 🔐 Environment Variables
+### ✅ Option 2: Deploy via Docker Hub + Railway
 
-| Variable      | Used in | Purpose                     |
-|---------------|---------|-----------------------------|
-| `REDIS_HOST`  | app     | Points to Redis service hostname |
+This app was pushed to **Docker Hub** as a public image. You can deploy directly from it.
+
+#### Step 1: Pull Image from Docker Hub
+```bash
+docker pull ddadekunle/devops-day2-guestbook:latest
+docker run -p 5050:5000 ddadekunle/devops-day2-guestbook
+```
+
+#### Step 2: Deploy on [Railway](https://railway.app/)
+1. Create a new project on Railway
+2. Choose **Deploy from Docker Image**
+3. Paste image: `ddadekunle/devops-day2-guestbook`
+4. Add a **Redis Add-on**
+5. Set environment variable: `REDIS_HOST=redis`
 
 ---
 
-## 🌐 Live Demo (Optional)
+## 📸 Preview
 
-If deployed, link here:  
-👉 [https://day2-multicontainer.up.railway.app](https://day2-multicontainer.up.railway.app)
+![Screenshot](./screenshots/guestbook-ui-dark.png)
 
 ---
 
-## 👨‍💻 Author
+## 👨🏽‍💻 Author
 
 **Damilare Adekunle**  
-Cloud & DevOps Engineer
-
-- 🌐 Portfolio: [ddadekunle.com](https://ddadekunle.com)
-- 📄 Resume: [ddadekunle.com/resume](https://ddadekunle.com/resume)
-- 💻 GitHub: [github.com/ddadekunle](https://github.com/ddadekunle)
-- 🔗 LinkedIn: [linkedin.com/in/ddadekunle](https://linkedin.com/in/ddadekunle)
-- 📧 Email: [adekunledare12@gmail.com](mailto:adekunledare12@gmail.com)
+Cloud & DevOps Engineer  
+[Portfolio](https://ddadekunle.com) · [GitHub](https://github.com/ddadekunle) · [LinkedIn](https://linkedin.com/in/ddadekunle)
 
 ---
 
-## 📝 License
+## 📄 License
 
-MIT — use, extend, or deploy as needed.
+MIT — free to use, modify and distribute.
